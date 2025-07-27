@@ -3,7 +3,7 @@
   "width": 832,
   "height": 1216,
   "steps": 23,
-  "scale": 11.0,
+  "scale": 5.0,
   "sampler": "k_euler_ancestral",
   "sm": false,
   "sm_dyn": false,
@@ -12,7 +12,9 @@
   "legacy": false,
   "add_original_image": false,
   "ucPreset": 0,
-  "qualityToggle": true,
+  "qualityToggle": false,
+  "cfg_rescale": 0.0,
+  "noise_schedule": "karras",
   "trials": 1,
   "batch_name": "default"
 }

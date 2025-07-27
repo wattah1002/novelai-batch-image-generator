@@ -44,7 +44,7 @@ DEFAULT_CONFIG = {
     "width": 832,
     "height": 1216,
     "steps": 28,
-    "scale": 11.0,
+    "scale": 5.0,
     "sampler": "k_euler_ancestral",
     "sm": False,
     "sm_dyn": False,
@@ -53,7 +53,9 @@ DEFAULT_CONFIG = {
     "legacy": False,
     "add_original_image": False,
     "ucPreset": 0,
-    "qualityToggle": True
+    "qualityToggle": False,
+    "cfg_rescale": 0.0,
+    "noise_schedule": "karras"
 }
 
 class NovelAIBatchGenerator:
@@ -97,8 +99,8 @@ class NovelAIBatchGenerator:
                     "steps": config.get("steps", 23),
                     "seed": seed if seed is not None else random.randint(0, 4294967295),
                     "n_samples": 1,
-                    "ucPreset": 3,
-                    "qualityToggle": False,
+                    "ucPreset": config.get("ucPreset", 0),
+                    "qualityToggle": config.get("qualityToggle", False),
                     "sm": config.get("sm", False),
                     "sm_dyn": config.get("sm_dyn", False),
                     "dynamic_thresholding": config.get("dynamic_thresholding", False),
@@ -106,8 +108,8 @@ class NovelAIBatchGenerator:
                     "controlnet_strength": 1.0,
                     "legacy": False,
                     "add_original_image": False,
-                    "cfg_rescale": 0.0,
-                    "noise_schedule": "native",
+                    "cfg_rescale": config.get("cfg_rescale", 0.0),
+                    "noise_schedule": config.get("noise_schedule", "karras"),
                     "legacy_v3_extend": False,
                     "uncond_scale": 1.0,
                     "negative_prompt": negative_prompt,
