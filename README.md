@@ -26,17 +26,18 @@ python novelai_batch_generator.py
 ```bash
 python novelai_batch_generator.py \
   --count 50 \
-  --model NAI_DIFFUSION_3 \
-  --width 768 \
-  --height 1024 \
-  --steps 28
+  --model NAI_DIFFUSION_4_5_CURATED \
+  --width 1024 \
+  --height 1536 \
+  --steps 23 \
+  --scale 5.0
 ```
 
-### V4.5モデルを使用する場合
+### V4.5 Curatedモデルを使用する場合
 ```bash
 python novelai_batch_generator.py \
   --count 100 \
-  --model NAI_DIFFUSION_4_5_CURATED_PREVIEW
+  --model NAI_DIFFUSION_4_5_CURATED
 ```
 
 ### コマンドラインオプション
@@ -44,22 +45,18 @@ python novelai_batch_generator.py \
 - `--negative-prompt-file`: ネガティブプロンプトファイルのパス（デフォルト: negative_prompts.txt）
 - `--count`: 生成する画像数（デフォルト: 100）
 - `--model`: 使用するモデル（デフォルト: NAI_DIFFUSION_4_5_FULL）
-- `--width`: 画像の幅（デフォルト: 512）
-- `--height`: 画像の高さ（デフォルト: 768）
-- `--steps`: サンプリングステップ数（デフォルト: 28）
-- `--scale`: ガイダンススケール（デフォルト: 11.0）
+- `--width`: 画像の幅（デフォルト: 832）
+- `--height`: 画像の高さ（デフォルト: 1216）
+- `--steps`: サンプリングステップ数（デフォルト: 23）
+- `--scale`: ガイダンススケール（デフォルト: 5.0）
 - `--sampler`: サンプラー（デフォルト: k_euler_ancestral）
 - `--output-dir`: カスタム出力ディレクトリ
+- `--trials`: プロンプトごとの試行回数（異なるシードで生成）
+- `--batch-name`: バッチ名（ファイル名に使用）
 
 ## 利用可能なモデル
-- NAI_DIFFUSION_3（デフォルト）- NovelAI Diffusion V3
-- NAI_DIFFUSION_4_5_CURATED_PREVIEW - NovelAI Diffusion V4.5 Curated Preview（最新）
-- NAI_DIFFUSION_4_CURATED_PREVIEW - NovelAI Diffusion V4 Curated Preview
-- NAI_DIFFUSION_3_INPAINTING - NovelAI Diffusion V3 Inpainting
-- NAI_DIFFUSION - NovelAI Diffusion V1
-- NAI_DIFFUSION_2 - NovelAI Diffusion V2
-- SAFE_DIFFUSION - Safe Diffusion (Curated)
-- NAI_DIFFUSION_FURRY - NovelAI Diffusion Furry
+- NAI_DIFFUSION_4_5_FULL（デフォルト）- NovelAI Diffusion V4.5 Full（最新・高品質）
+- NAI_DIFFUSION_4_5_CURATED - NovelAI Diffusion V4.5 Curated（最新・軽量版）
 
 ## ファイル構成
 - `prompts.txt`: プロンプト（1行1プロンプト）
@@ -77,4 +74,4 @@ python novelai_batch_generator.py \
 - NovelAI APIの利用にはアカウントとAPIトークンが必要です
 - 大量の画像を生成する場合は、APIの利用制限に注意してください
 - 非同期処理により効率的に生成しますが、同時接続数は5に制限されています
-- V4.5モデルをデフォルトにしたい場合は、`config.json`の`"model"`を`"NAI_DIFFUSION_4_5_CURATED_PREVIEW"`に変更してください
+- デフォルトモデルはV4.5 Fullに設定されています。軽量版を使用したい場合は`--model NAI_DIFFUSION_4_5_CURATED`を指定するか、`config.json`の`"model"`を変更してください
