@@ -73,5 +73,5 @@ python novelai_batch_generator.py \
 ## 注意事項
 - NovelAI APIの利用にはアカウントとAPIトークンが必要です
 - 大量の画像を生成する場合は、APIの利用制限に注意してください
-- 非同期処理により効率的に生成しますが、同時接続数は5に制限されています
+- NovelAI APIの仕様により同時実行はできませんが、非同期処理により順次効率的に生成します
 - デフォルトモデルはV4.5 Fullに設定されています。軽量版を使用したい場合は`--model NAI_DIFFUSION_4_5_CURATED`を指定するか、`config.json`の`"model"`を変更してください
