@@ -27,7 +27,9 @@ IMAGE_API_URL = "https://image.novelai.net"
 # Available models
 MODELS = {
     "NAI_DIFFUSION_4_5_CURATED_PREVIEW": "nai-diffusion-4-5-curated-preview",
+    "NAI_DIFFUSION_4_5_FULL": "nai-diffusion-4-5-full",
     "NAI_DIFFUSION_4_CURATED_PREVIEW": "nai-diffusion-4-curated-preview",
+    "NAI_DIFFUSION_4_FULL": "nai-diffusion-4-full",
     "NAI_DIFFUSION_3": "nai-diffusion-3",
     "NAI_DIFFUSION_3_INPAINTING": "nai-diffusion-3-inpainting",
     "NAI_DIFFUSION": "nai-diffusion",
@@ -39,8 +41,8 @@ MODELS = {
 # Default configuration
 DEFAULT_CONFIG = {
     "model": "NAI_DIFFUSION_3",
-    "width": 512,
-    "height": 768,
+    "width": 832,
+    "height": 1216,
     "steps": 28,
     "scale": 11.0,
     "sampler": "k_euler_ancestral",
@@ -58,7 +60,7 @@ class NovelAIBatchGenerator:
     def __init__(self, token: str):
         self.token = token
         self.session = None
-        self.semaphore = asyncio.Semaphore(5)  # Limit concurrent requests
+        self.semaphore = asyncio.Semaphore(1)  # NovelAI doesn't allow concurrent requests
         
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
@@ -68,9 +70,11 @@ class NovelAIBatchGenerator:
         if self.session:
             await self.session.close()
             
-    async def generate_image(self, prompt: str, negative_prompt: str, config: Dict[str, Any]) -> Optional[bytes]:
-        """Generate a single image using NovelAI API"""
+    async def generate_image(self, prompt: str, negative_prompt: str, config: Dict[str, Any], seed: Optional[int] = None) -> Optional[bytes]:
+        """Generate a single image using NovelAI API with specified seed"""
         async with self.semaphore:
+            # Add delay between requests to avoid rate limiting
+            await asyncio.sleep(0.5)
             headers = {
                 "Authorization": f"Bearer {self.token}",
                 "Content-Type": "application/json",
@@ -85,22 +89,49 @@ class NovelAIBatchGenerator:
                 "model": model_value,
                 "action": "generate",
                 "parameters": {
-                    "width": config.get("width", 512),
-                    "height": config.get("height", 768),
+                    "params_version": 1,
+                    "width": config.get("width", 832),
+                    "height": config.get("height", 1216),
                     "scale": config.get("scale", 11.0),
                     "sampler": config.get("sampler", "k_euler_ancestral"),
-                    "steps": config.get("steps", 28),
-                    "seed": random.randint(0, 4294967295),
+                    "steps": config.get("steps", 23),
+                    "seed": seed if seed is not None else random.randint(0, 4294967295),
                     "n_samples": 1,
-                    "ucPreset": config.get("ucPreset", 0),
-                    "qualityToggle": config.get("qualityToggle", True),
+                    "ucPreset": 3,
+                    "qualityToggle": False,
                     "sm": config.get("sm", False),
                     "sm_dyn": config.get("sm_dyn", False),
                     "dynamic_thresholding": config.get("dynamic_thresholding", False),
-                    "controlnet_strength": config.get("controlnet_strength", 1.0),
-                    "legacy": config.get("legacy", False),
-                    "add_original_image": config.get("add_original_image", False),
-                    "negative_prompt": negative_prompt
+                    "skip_cfg_above_sigma": None,
+                    "controlnet_strength": 1.0,
+                    "legacy": False,
+                    "add_original_image": False,
+                    "cfg_rescale": 0.0,
+                    "noise_schedule": "native",
+                    "legacy_v3_extend": False,
+                    "uncond_scale": 1.0,
+                    "negative_prompt": negative_prompt,
+                    "prompt": prompt,
+                    "reference_image_multiple": [],
+                    "reference_information_extracted_multiple": [],
+                    "reference_strength_multiple": [],
+                    "extra_noise_seed": random.randint(0, 4294967295),
+                    "v4_prompt": {
+                        "use_coords": False,
+                        "use_order": False,
+                        "caption": {
+                            "base_caption": prompt,
+                            "char_captions": []
+                        }
+                    },
+                    "v4_negative_prompt": {
+                        "use_coords": False,
+                        "use_order": False,
+                        "caption": {
+                            "base_caption": negative_prompt,
+                            "char_captions": []
+                        }
+                    }
                 }
             }
             
@@ -134,33 +165,46 @@ class NovelAIBatchGenerator:
                 
     async def generate_batch(self, prompts: List[str], negative_prompts: List[str], 
                            count: int, config: Dict[str, Any], output_dir: Path):
-        """Generate multiple images in batch"""
+        """Generate multiple images in batch with different seeds"""
         tasks = []
         
+        # Get trials count and batch name from config
+        trials = config.get("trials", 1)
+        batch_name = config.get("batch_name", "default")
+        
+        # Calculate total number of images
+        total_images = count * trials
+        
         # Create progress bar
-        pbar = async_tqdm(total=count, desc="Generating images")
+        pbar = async_tqdm(total=total_images, desc="Generating images")
         
         # Prepare prompts for generation
         prompt_list = []
         for i in range(count):
+            # Select prompt and negative prompt
             prompt = random.choice(prompts) if len(prompts) > 1 else prompts[0]
             negative_prompt = random.choice(negative_prompts) if len(negative_prompts) > 1 else negative_prompts[0]
-            prompt_list.append((prompt, negative_prompt, i))
             
-        async def generate_and_save(prompt: str, negative_prompt: str, index: int):
-            image_data = await self.generate_image(prompt, negative_prompt, config)
+            # Generate with different seeds for each trial
+            base_seed = random.randint(0, 4294967295 - trials)
+            for trial_idx in range(trials):
+                seed = base_seed + trial_idx
+                prompt_list.append((prompt, negative_prompt, i, trial_idx, seed))
+            
+        async def generate_and_save(prompt: str, negative_prompt: str, prompt_idx: int, trial_idx: int, seed: int):
+            image_data = await self.generate_image(prompt, negative_prompt, config, seed)
             if image_data:
-                filename = output_dir / "images" / f"image_{index:04d}.png"
+                filename = output_dir / "images" / f"{batch_name}_prompt{prompt_idx:04d}_seed{seed}.png"
                 async with aiofiles.open(filename, 'wb') as f:
                     await f.write(image_data)
-                logging.info(f"Saved: {filename}")
+                logging.info(f"Saved: {filename} (seed: {seed})")
             else:
-                logging.error(f"Failed to generate image {index}")
+                logging.error(f"Failed to generate image for prompt {prompt_idx}, trial {trial_idx} (seed: {seed})")
             pbar.update(1)
             
         # Create tasks for all generations
-        for prompt, negative_prompt, i in prompt_list:
-            task = generate_and_save(prompt, negative_prompt, i)
+        for prompt, negative_prompt, prompt_idx, trial_idx, seed in prompt_list:
+            task = generate_and_save(prompt, negative_prompt, prompt_idx, trial_idx, seed)
             tasks.append(task)
             
         # Execute all tasks
@@ -224,7 +268,7 @@ async def main():
     parser = argparse.ArgumentParser(description="NovelAI Batch Image Generator")
     parser.add_argument("--prompt-file", default="prompts.txt", help="Path to prompts file")
     parser.add_argument("--negative-prompt-file", default="negative_prompts.txt", help="Path to negative prompts file")
-    parser.add_argument("--count", type=int, default=100, help="Number of images to generate")
+    parser.add_argument("--count", type=int, default=100, help="Number of prompts to use")
     parser.add_argument("--config", default="config.json", help="Path to config file")
     parser.add_argument("--model", choices=list(MODELS.keys()), help="Model to use")
     parser.add_argument("--width", type=int, help="Image width")
@@ -233,6 +277,8 @@ async def main():
     parser.add_argument("--scale", type=float, help="Guidance scale")
     parser.add_argument("--sampler", help="Sampler to use")
     parser.add_argument("--output-dir", help="Custom output directory")
+    parser.add_argument("--trials", type=int, help="Number of trials per prompt with different seeds")
+    parser.add_argument("--batch-name", help="Name for this batch (used in filenames)")
     
     args = parser.parse_args()
     
@@ -269,6 +315,10 @@ async def main():
         config["scale"] = args.scale
     if args.sampler:
         config["sampler"] = args.sampler
+    if args.trials:
+        config["trials"] = args.trials
+    if args.batch_name:
+        config["batch_name"] = args.batch_name
         
     # Create output directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -290,9 +340,12 @@ async def main():
     logging.getLogger().addHandler(file_handler)
     
     # Log generation start
-    logging.info(f"Starting batch generation of {args.count} images")
+    trials = config.get("trials", 1)
+    total_images = args.count * trials
+    logging.info(f"Starting batch generation: {args.count} prompts × {trials} trials = {total_images} images")
     logging.info(f"Model: {config['model']}")
     logging.info(f"Resolution: {config['width']}x{config['height']}")
+    logging.info(f"Batch name: {config.get('batch_name', 'default')}")
     logging.info(f"Output directory: {output_dir}")
     
     # Generate images

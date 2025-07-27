@@ -1,8 +1,8 @@
 {
-  "model": "NAI_DIFFUSION_3",
-  "width": 512,
-  "height": 768,
-  "steps": 28,
+  "model": "NAI_DIFFUSION_4_5_FULL",
+  "width": 832,
+  "height": 1216,
+  "steps": 23,
   "scale": 11.0,
   "sampler": "k_euler_ancestral",
   "sm": false,
@@ -12,5 +12,7 @@
   "legacy": false,
   "add_original_image": false,
   "ucPreset": 0,
-  "qualityToggle": true
+  "qualityToggle": true,
+  "trials": 1,
+  "batch_name": "default"
 }
