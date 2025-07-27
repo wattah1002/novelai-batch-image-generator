@@ -26,21 +26,13 @@ IMAGE_API_URL = "https://image.novelai.net"
 
 # Available models
 MODELS = {
-    "NAI_DIFFUSION_4_5_CURATED_PREVIEW": "nai-diffusion-4-5-curated-preview",
-    "NAI_DIFFUSION_4_5_FULL": "nai-diffusion-4-5-full",
-    "NAI_DIFFUSION_4_CURATED_PREVIEW": "nai-diffusion-4-curated-preview",
-    "NAI_DIFFUSION_4_FULL": "nai-diffusion-4-full",
-    "NAI_DIFFUSION_3": "nai-diffusion-3",
-    "NAI_DIFFUSION_3_INPAINTING": "nai-diffusion-3-inpainting",
-    "NAI_DIFFUSION": "nai-diffusion",
-    "NAI_DIFFUSION_2": "nai-diffusion-2",
-    "SAFE_DIFFUSION": "safe-diffusion",
-    "NAI_DIFFUSION_FURRY": "nai-diffusion-furry"
+    "NAI_DIFFUSION_4_5_CURATED": "nai-diffusion-4-5-curated",
+    "NAI_DIFFUSION_4_5_FULL": "nai-diffusion-4-5-full"
 }
 
 # Default configuration
 DEFAULT_CONFIG = {
-    "model": "NAI_DIFFUSION_3",
+    "model": "NAI_DIFFUSION_4_5_FULL",
     "width": 832,
     "height": 1216,
     "steps": 28,
@@ -83,8 +75,8 @@ class NovelAIBatchGenerator:
                 "accept": "application/x-zip-compressed"
             }
             
-            model_key = config.get("model", "NAI_DIFFUSION_3")
-            model_value = MODELS.get(model_key, MODELS["NAI_DIFFUSION_3"])
+            model_key = config.get("model", "NAI_DIFFUSION_4_5_FULL")
+            model_value = MODELS.get(model_key, MODELS["NAI_DIFFUSION_4_5_FULL"])
             
             payload = {
                 "input": prompt,
