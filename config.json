@@ -1,0 +1,16 @@
+{
+  "model": "NAI_DIFFUSION_3",
+  "width": 512,
+  "height": 768,
+  "steps": 28,
+  "scale": 11.0,
+  "sampler": "k_euler_ancestral",
+  "sm": false,
+  "sm_dyn": false,
+  "dynamic_thresholding": false,
+  "controlnet_strength": 1.0,
+  "legacy": false,
+  "add_original_image": false,
+  "ucPreset": 0,
+  "qualityToggle": true
+}
